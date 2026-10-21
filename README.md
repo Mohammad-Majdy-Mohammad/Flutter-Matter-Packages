@@ -1,4 +1,4 @@
-# Matter Flutter Libraries
+# Flutter Matter Packages
 
 This repo collects every working Matter library published for Flutter/Dart on pub.dev in one place (surveyed 2026-10-21). [Matter](https://csa-iot.org/all-solutions/matter/) is the smart-home protocol. Each library comes with the native SDK pieces it needs, and all of them are pinned, checksummed and checked by `tool/verify.sh`.
 
@@ -28,25 +28,42 @@ Each library is a self-contained package under `packages/`. Native Matter SDK bi
 
 ## Add a package to your app
 
-Reference it straight from this repo with a git dependency. Pin `ref` to a commit or tag so every developer gets the same bytes:
+Reference it straight from this repo with a git dependency, adding only the packages you need. Remember: on Android, `flutter_matter` *or* `google_matter_flutter`, not both.
 
 ```yaml
 dependencies:
   flutter_matter:
     git:
-      url: https://github.com/Mohammad-Majdy-Mohammad/BLENDER.git
-      ref: main          # better: a tag or commit SHA
+      url: https://github.com/Mohammad-Majdy-Mohammad/Flutter-Matter-Packages.git
+      ref: main
       path: packages/flutter_matter
+  matter_sharing:
+    git:
+      url: https://github.com/Mohammad-Majdy-Mohammad/Flutter-Matter-Packages.git
+      ref: main
+      path: packages/matter_sharing
   matter_dcl:
     git:
-      url: https://github.com/Mohammad-Majdy-Mohammad/BLENDER.git
+      url: https://github.com/Mohammad-Majdy-Mohammad/Flutter-Matter-Packages.git
       ref: main
       path: packages/matter_dcl
+  # google_matter_flutter: same pattern, path: packages/google_matter_flutter
 ```
 
-If the repo is private, every developer and the CI machine need git access to it. You can also clone it next to your app and use `path: ../BLENDER/packages/flutter_matter`.
+Your app's `pubspec.lock` records the exact commit, so everyone on the team gets the same bytes until someone runs `flutter pub upgrade`. To freeze a version for good, replace `main` with a commit SHA.
 
-Requirements: **Flutter 3.41+**, the minimum for `matter_sharing`. Everything here was verified with Flutter 3.47.7 / Dart 3.13.5.
+If the repo is private, every developer and the CI machine need git access to it. You can also clone it next to your app and use `path: ../Flutter-Matter-Packages/packages/flutter_matter`.
+
+Requirements by package:
+
+| Package | Flutter / Dart |
+|---|---|
+| matter_sharing | Flutter 3.41+ |
+| flutter_matter | Flutter 3.3+, Dart 3.3.3+ |
+| google_matter_flutter | Flutter 3.0+ |
+| matter_dcl | Dart 3.4+ |
+
+Everything here was verified together with Flutter 3.47.7 / Dart 3.13.5.
 
 Then do the platform setup. Every package needs some manifest, Info.plist or entitlement work:
 
