@@ -1,0 +1,69 @@
+group 'com.google.google_matter_flutter.google_matter_flutter'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.9.20'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'com.google.google_matter_flutter.google_matter_flutter'
+    compileSdk 34
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    // Needed so BuildConfig.DEBUG is generated; used to gate verbose logging (see MatterLog.kt)
+    // so this library stays silent in release builds of apps that depend on it.
+    buildFeatures {
+        buildConfig true
+    }
+
+    defaultConfig {
+        // Matches Build.VERSION_CODES.O_MR1, required by the Matter/Home Mobile SDK APIs used here.
+        minSdkVersion 27
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+
+    // Home Mobile SDK
+    implementation 'com.google.android.gms:play-services-home:16.0.0'
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+
+    // Matter Android Demo SDK.
+    // This is the official, Maven-hosted replacement for the old, manually bundled
+    // "third_party/connectedhomeip" native binaries (CHIPController.jar, SetupPayloadParser.jar
+    // and per-ABI .so libs). It's still explicitly a *demo* SDK: no warranty, dev/test only.
+    // See https://github.com/google-home/sample-apps-for-matter-android
+    implementation 'com.google.matter:matter-android-demo-sdk:1.0'
+}

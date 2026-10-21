@@ -1,0 +1,5 @@
+# Keep vendored files byte-identical to upstream on every OS (some use CRLF).
+packages/** -text
+patches/*.patch -text
+*.aar binary
+*.jar binary
