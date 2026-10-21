@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # Checks that the vendored packages are intact and usable:
-#   1. the bundled native binaries match native/checksums.sha256
+#   1. the bundled native binaries match native/checksums.sha256, and
+#      matter_sharing's CocoaPods and Swift Package Manager sources match
 #   2. each package resolves, analyzes and passes its own tests
-#   3. a fresh app that depends on all of them resolves and analyzes
-#   4. if gradle is installed, the bundled Maven repos resolve offline through
+#   3. each plugin's example app resolves, analyzes and passes its tests
+#   4. a fresh app that depends on all of them resolves and analyzes
+#   5. if gradle is installed, the bundled Maven repos resolve offline through
 #      an app's repositories, the way a Flutter Android build resolves them
+#
+# tool/check_android_compile.sh is the slower companion that compiles the
+# plugins' Kotlin code against the bundled native SDKs.
 #
 # Works on a temporary copy of packages/, because the flutter tool rewrites
 # analysis_options.yaml files in place.
@@ -27,6 +32,11 @@ else
   shasum -a 256 --quiet -c native/checksums.sha256
 fi
 
+echo "==> matter_sharing iOS sources"
+# Flutter builds the Classes/ copy with CocoaPods and the Sources/ copy with
+# Swift Package Manager (the default). They must not drift apart again.
+diff -r packages/matter_sharing/ios/Classes packages/matter_sharing/ios/matter_sharing/Sources/matter_sharing
+
 cp -R "$ROOT/packages" "$WORK/packages"
 
 check_package() { # name tool
@@ -48,6 +58,16 @@ check_package() { # name tool
 
 for name in "${FLUTTER_PACKAGES[@]}"; do check_package "$name" flutter; done
 for name in "${DART_PACKAGES[@]}"; do check_package "$name" dart; done
+
+for name in "${FLUTTER_PACKAGES[@]}"; do
+  echo "==> $name example app"
+  cd "$WORK/packages/$name/example"
+  flutter pub get >/dev/null
+  flutter analyze --no-fatal-infos --no-fatal-warnings
+  if [[ -d test ]]; then
+    flutter test test
+  fi
+done
 
 echo "==> consumer app using every package"
 cd "$WORK"

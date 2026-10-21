@@ -78,30 +78,43 @@ packages/            the libraries, ready to depend on (upstream sources + bundl
   google_matter_flutter/ android/maven/ holds the bundled Matter Android Demo SDK
   matter_sharing/
   matter_dcl/
-patches/             the only changes made to upstream sources (Android repository wiring)
+patches/             every change made to upstream sources (see below)
 native/              inventory and checksums of every bundled native binary
 docs/                platform setup, native SDK reference
-tool/fetch_sources.sh  rebuilds packages/ from pinned, checksummed upstream sources
-tool/verify.sh         checks binaries, analyzes and tests every package and a consumer app
+tool/fetch_sources.sh          rebuilds packages/ from pinned, checksummed upstream sources
+tool/verify.sh                 checks binaries, analyzes and tests every package, example app and a consumer app
+tool/check_android_compile.sh  compiles the plugins' Android code against the bundled native SDKs
 CATALOG.md           the full survey: what exists, what was bundled, what was left out
 ```
 
 ## What was changed from upstream
 
-Two Android `build.gradle` files, nothing else ([patches/](patches)):
+Everything is in [patches/](patches); the rest is byte-for-byte what pub.dev publishes.
 
-- **flutter_matter**: upstream pulled its native SDK `com.github.Tan-yi-xiong:flutter_matter_android_prefixed:1.0.5` from JitPack. Each app had to add JitPack itself, and JitPack is often blocked or slow. The AAR now ships in `packages/flutter_matter/android/maven/`, and the plugin registers that folder for the app.
-- **google_matter_flutter**: `com.google.matter:matter-android-demo-sdk:1.0` ships in `packages/google_matter_flutter/android/maven/`, so builds are pinned and work offline.
+- **flutter_matter, `android/build.gradle`**: upstream pulled its native SDK `com.github.Tan-yi-xiong:flutter_matter_android_prefixed:1.0.5` from JitPack. Each app had to add JitPack itself, and JitPack is often blocked or slow. The AAR now ships in `packages/flutter_matter/android/maven/`, and the plugin registers that folder for the app.
+- **google_matter_flutter, `android/build.gradle`**: `com.google.matter:matter-android-demo-sdk:1.0` ships in `packages/google_matter_flutter/android/maven/`, so builds are pinned and work offline.
+- **matter_sharing, iOS bug fix**: the plugin keeps its Swift code twice: `ios/Classes` for CocoaPods and `ios/matter_sharing/Sources` for Swift Package Manager, which Flutter 3.47 uses by default. Upstream's Swift Package Manager copy of `GoogleHomeSharing.swift` was stale. It reported fabric conflicts and timeouts as "user cancelled", and it never sent the `alreadyCommissioned` error the Dart API defines. That copy now matches the CocoaPods one, and `verify.sh` fails if the two drift apart again.
+- **google_matter_flutter and matter_sharing example apps**: their widget tests were broken template leftovers. They are replaced with smoke tests that pass.
 
-Both use Gradle `exclusiveContent`, so those artifact groups resolve only from the bundled copies, whatever repositories the app declares.
+Both Android changes use Gradle `exclusiveContent`, so those artifact groups resolve only from the bundled copies, whatever repositories the app declares.
 
 ## Maintaining this repo
 
 ```sh
-tool/fetch_sources.sh   # re-download pinned sources, verify SHA-256, re-apply patches
-tool/verify.sh          # needs flutter on PATH; uses gradle too if installed
+tool/fetch_sources.sh          # re-download pinned sources, verify SHA-256, re-apply patches
+tool/verify.sh                 # needs flutter on PATH; uses gradle too if installed
+tool/check_android_compile.sh  # needs flutter, gradle and a JDK; downloads ~140 MB
 ```
 
-To upgrade a library, bump its pin in `tool/fetch_sources.sh` (version + SHA-256 from `https://pub.dev/api/packages/<name>`) and run both scripts. Update `native/checksums.sha256` if a bundled binary changed, and update the tables here and in CATALOG.md.
+To upgrade a library, bump its pin in `tool/fetch_sources.sh` (version + SHA-256 from `https://pub.dev/api/packages/<name>`) and run all three scripts. Update `native/checksums.sha256` if a bundled binary changed, and update the tables here and in CATALOG.md.
 
-What `verify.sh` covers: binary checksums; `pub get`, `analyze` and the upstream unit tests of each package; a fresh app that depends on all four packages and analyzes clean; and offline Gradle resolution of both bundled AARs through an app's repositories. It does **not** build an APK or IPA. Run your app on a real device to confirm the native side. Matter commissioning needs real hardware or Google's Matter Virtual Device.
+What the checks cover:
+- binary checksums;
+- that `matter_sharing`'s two Swift copies are identical;
+- `pub get`, `analyze` and the unit tests of each package and each plugin's example app;
+- a fresh app that depends on all four packages and analyzes clean;
+- offline Gradle resolution of both bundled AARs through an app's repositories;
+- compilation of the plugins' Android Kotlin code against the bundled native SDKs (`flutter_matter` in full, `google_matter_flutter`'s Matter code);
+- for iOS: every `ZGMatter` class and function `flutter_matter` calls is exported by the bundled framework (checked once by hand, see CATALOG.md).
+
+They do **not** build an APK or IPA: the Android SDK and Xcode were not available where this repo was assembled. Run your app on a real Android phone and iPhone to confirm the native side end to end. Matter commissioning needs real hardware or Google's Matter Virtual Device.

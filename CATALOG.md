@@ -81,4 +81,15 @@ These cannot be redistributed, sit behind a sign-in, or come with the OS. Detail
 - **flutter_matter on iOS** works on devices only, with no simulator slice. Its podspec says iOS 11, but `ZGMatter.framework` needs iOS 14 and the Matter extension needs iOS 16.1.
 - **flutter_matter on Android** ships only `arm64-v8a` and `armeabi-v7a` libraries, so it does not run on x86 emulators.
 - **google_matter_flutter** reads by polling and has no subscriptions. Its demo SDK is not for production, and its native libraries are only 4 KB page aligned (checked with `readelf`). Google Play rejects that for apps targeting Android 15+, and it fails on 16 KB page size devices. The `flutter_matter` native libraries are 16 KB aligned.
-- **matter_sharing**: `example/test/widget_test.dart` is a broken leftover from the upstream template (it imports `package:example`). The library itself is fine. The podspec says version 0.1.0 while the package is 0.1.6 (cosmetic).
+- **matter_sharing on iOS with Google Home** needs CocoaPods plus hooks copied from the example Podfile. Flutter 3.47 defaults to Swift Package Manager, where the Google Home path reports `sdkNotLinked`. See [docs/ios-setup.md](docs/ios-setup.md). Apple Home sharing works with either. The podspec says version 0.1.0 while the package is 0.1.6 (cosmetic).
+
+### Fixed in this repo
+
+- **matter_sharing**: the Swift Package Manager copy of `GoogleHomeSharing.swift` was stale (wrong "cancelled" detection, no `alreadyCommissioned` error). It now matches the CocoaPods copy. See `patches/matter_sharing.patch`.
+- **google_matter_flutter** and **matter_sharing** example apps: broken template widget tests replaced with passing smoke tests.
+- **flutter_matter** native SDK: no longer depends on JitPack.
+
+### Verified beyond the unit tests
+
+- `flutter_matter`: all 45 native classes its Android code imports exist in the bundled AAR, and its whole Android plugin (38 classes) compiles against it (`tool/check_android_compile.sh`). On iOS, all 53 `ZGMTR*` symbols its Objective-C code uses are exported by or declared in `ZGMatter.framework` (checked with `llvm-nm`). The framework links only standard iOS system libraries.
+- `google_matter_flutter`: all 16 native classes it imports exist in the bundled AAR, and its Matter code (70 classes) compiles against it.

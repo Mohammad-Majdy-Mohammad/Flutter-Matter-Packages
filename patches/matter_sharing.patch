@@ -1,0 +1,150 @@
+--- a/example/test/widget_test.dart
++++ b/example/test/widget_test.dart
+@@ -1,30 +1,11 @@
+-// This is a basic Flutter widget test.
+-//
+-// To perform an interaction with a widget in your test, use the WidgetTester
+-// utility in the flutter_test package. For example, you can send tap and scroll
+-// gestures. You can also use WidgetTester to find child widgets in the widget
+-// tree, read text, and verify that the values of widget properties are correct.
+-
+-import 'package:flutter/material.dart';
+ import 'package:flutter_test/flutter_test.dart';
+ 
+-import 'package:example/main.dart';
++import 'package:matter_sharing_example/main.dart';
+ 
+ void main() {
+-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+-    // Build our app and trigger a frame.
++  testWidgets('example app builds its home page', (WidgetTester tester) async {
+     await tester.pumpWidget(const MyApp());
+ 
+-    // Verify that our counter starts at 0.
+-    expect(find.text('0'), findsOneWidget);
+-    expect(find.text('1'), findsNothing);
+-
+-    // Tap the '+' icon and trigger a frame.
+-    await tester.tap(find.byIcon(Icons.add));
+-    await tester.pump();
+-
+-    // Verify that our counter has incremented.
+-    expect(find.text('0'), findsNothing);
+-    expect(find.text('1'), findsOneWidget);
++    expect(find.text('Matter Sharing Example'), findsWidgets);
+   });
+ }
+--- a/ios/matter_sharing/Sources/matter_sharing/GoogleHomeSharing.swift
++++ b/ios/matter_sharing/Sources/matter_sharing/GoogleHomeSharing.swift
+@@ -33,7 +33,7 @@
+     self.isConfigured = true
+ 
+     #if canImport(GoogleHomeSDK)
+-    DispatchQueue.main.async {
++    Task { @MainActor in
+       Home.configure {
+         $0.teamID = teamID
+         $0.clientID = clientID
+@@ -140,32 +140,45 @@
+         } catch {
+           _ = structure.markMatterCommissioningFailed(error: error)
+           activeStructure = nil
+-          if Self.isUserCancelled(error) {
++          let nsErr = error as NSError
++          // HFErrorDomain Code=33: device already associated to this home
++          // MatterSupport error 1 wrapping HFErrorDomain 33: same duplicate case
++          let isDuplicate = (nsErr.domain == "HFErrorDomain" && nsErr.code == 33)
++            || (nsErr.userInfo[NSUnderlyingErrorKey] as? NSError).map {
++                $0.domain == "HFErrorDomain" && $0.code == 33
++               } ?? false
++          if isDuplicate {
++            result(FlutterError(
++              code: "ALREADY_COMMISSIONED",
++              message: "This device has already been added to Google Home. Please remove it from the Google Home app first before adding again.",
++              details: ["domain": nsErr.domain, "code": nsErr.code]
++            ))
++          } else if Self.isUserCancelled(error) {
+             NSLog("[GoogleHomeSharing] User cancelled commissioning UI")
+             result(FlutterError(
+               code: "CANCELLED",
+               message: "User cancelled Google Home commissioning.",
+               details: nil
+             ))
+-            return
++          } else {
++            result(FlutterError(
++              code: "COMMISSION_FAILED",
++              message: """
++              Commissioning failed: \(error.localizedDescription)
++
++              Possible causes:
++              1. You are not the Google Home owner - only the home owner can add new devices.
++              2. The device has reached the maximum number of fabrics and cannot join another home.
++              3. A Bluetooth or network issue interrupted commissioning - move closer to the device and try again.
++              4. The Google Home in the app belongs to a different Google account than the one signed in.
++              """,
++              details: [
++                "domain": nsErr.domain,
++                "code": nsErr.code,
++                "underlyingError": nsErr.userInfo[NSUnderlyingErrorKey].map { "\($0)" } ?? "none"
++              ]
++            ))
+           }
+-          result(FlutterError(
+-            code: "COMMISSION_FAILED",
+-            message: """
+-            Commissioning failed: \(error.localizedDescription)
+-
+-            Possible causes:
+-            1. You are not the Google Home owner - only the home owner can add new devices.
+-            2. The device has reached the maximum number of supported fabrics and cannot join another home.
+-            3. A Bluetooth or network issue interrupted commissioning - move closer to the device and try again.
+-            4. The Google Home in the app belongs to a different Google account than the one signed in.
+-            """,
+-            details: [
+-              "domain": (error as NSError).domain,
+-              "code": (error as NSError).code,
+-              "underlyingError": (error as NSError).userInfo[NSUnderlyingErrorKey].map { "\($0)" } ?? "none"
+-            ]
+-          ))
+         }
+ 
+       } catch {
+@@ -210,31 +223,25 @@
+   /// Detects whether an error represents a user-initiated cancellation of the
+   /// system commissioning UI. Walks the underlying error chain because
+   /// MatterSupport and GoogleHomeSDK frequently wrap the original cancel error.
++  ///
++  /// IMPORTANT: `com.apple.MatterSupport` domain `code == 1` is NOT a reliable
++  /// cancel signal. iOS reports the same code for fabric conflicts, fail-safe
++  /// timer expiry, and extension failures. A real user cancel always has a
++  /// concrete underlying NSCocoa/HMError cancel in the chain.
+   static func isUserCancelled(_ error: Error) -> Bool {
+     var current: NSError? = error as NSError
+     while let err = current {
+-      // NSUserCancelledError (Cocoa) - generic user-cancel
+       if err.domain == NSCocoaErrorDomain && err.code == NSUserCancelledError {
+         return true
+       }
+-      // MatterSupport framework cancel
+-      if err.domain.contains("MatterSupport") && err.code == 1 {
+-        return true
+-      }
+-      // HomeKit operation cancelled (HMErrorCodeOperationCancelled = 38)
+       if err.domain == "HMErrorDomain" && err.code == 38 {
+         return true
+       }
+-      // Generic POSIX ECANCELED
+       if err.domain == NSPOSIXErrorDomain && err.code == 89 {
+         return true
+       }
+-      // Google Home SDK often returns domain "com.google.home" with cancel codes,
+-      // but the SDK also forwards Cocoa NSUserCancelledError through userInfo.
+       current = err.userInfo[NSUnderlyingErrorKey] as? NSError
+     }
+-    // Fallback: localized description contains "cancel"
+-    let msg = (error as NSError).localizedDescription.lowercased()
+-    return msg.contains("cancel")
++    return false
+   }
+ }
