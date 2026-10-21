@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- This module was also published with a richer model, Gradle metadata,  -->
+  <!-- which should be used instead. Do not delete the following line which  -->
+  <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+  <!-- that they should prefer consuming it instead. -->
+  <!-- do_not_remove: published-with-gradle-metadata -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.google.matter</groupId>
+  <artifactId>matter-android-demo-sdk</artifactId>
+  <version>1.0</version>
+  <packaging>aar</packaging>
+  <name>Matter Android Demo SDK</name>
+  <description>THIS LIBRARY IS PROVIDED WITH NO WARRANTY OR GUARANTEE OF ANY KIND, TO BE USED FOR DEVELOPMENT AND EXAMPLE PURPOSES ONLY. THIS LIBRARY SHOULD NOT BE USED IN A PRODUCTION APPLICATION. This library contains the JNI JAR and SO artifacts (all architectures) from the Matter SDK (https://github.com/project-chip/connectedhomeip) Android CHIP Tool examples to be used in the development and testing of Android Matter controller applications such as GHSAFM.</description>
+  <url>https://github.com/google-home/sample-apps-for-matter-android</url>
+  <scm>
+    <url>https://github.com/</url>
+  </scm>
+  <developers>
+    <developer>
+      <name>Austin Bozowski</name>
+      <email>bozowski@google.com</email>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/google-home/sample-app-for-matter-android/issues</url>
+  </issueManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jdk8</artifactId>
+      <version>1.7.20</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>androidx.core</groupId>
+      <artifactId>core-ktx</artifactId>
+      <version>1.7.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>androidx.appcompat</groupId>
+      <artifactId>appcompat</artifactId>
+      <version>1.5.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.android.material</groupId>
+      <artifactId>material</artifactId>
+      <version>1.7.0</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+</project>
+

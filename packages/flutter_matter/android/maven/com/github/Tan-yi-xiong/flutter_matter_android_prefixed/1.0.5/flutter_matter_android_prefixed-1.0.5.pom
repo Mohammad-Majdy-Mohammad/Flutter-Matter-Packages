@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.Tan-yi-xiong</groupId>
+  <artifactId>flutter_matter_android_prefixed</artifactId>
+  <version>1.0.5</version>
+  <packaging>aar</packaging>
+  <description>Matter SDK (connectedhomeip) Android controller JARs and arm64-v8a/armeabi-v7a JNI libraries used by flutter_matter. Copied from https://github.com/Tan-yi-xiong/flutter_matter_android_prefixed.git at tag 1.0.5.</description>
+</project>

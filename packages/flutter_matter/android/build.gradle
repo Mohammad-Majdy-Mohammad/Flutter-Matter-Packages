@@ -18,7 +18,24 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
+    }
+}
+
+// The native Matter (CHIP) SDK this plugin needs, com.github.Tan-yi-xiong:flutter_matter_android_prefixed,
+// was published only on JitPack. It is bundled in ./maven instead and declared on every project,
+// because the app resolves this plugin's dependencies with its own repositories.
+def bundledMavenRepo = new File(projectDir, 'maven')
+
+rootProject.allprojects {
+    repositories {
+        exclusiveContent {
+            forRepository {
+                maven { url bundledMavenRepo.toURI() }
+            }
+            filter {
+                includeGroup 'com.github.Tan-yi-xiong'
+            }
+        }
     }
 }
 

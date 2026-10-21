@@ -21,6 +21,24 @@ allprojects {
     }
 }
 
+// The Matter Android Demo SDK, com.google.matter:matter-android-demo-sdk, is bundled in ./maven so
+// builds use the exact pinned binaries, even offline. It is declared on every project, because the
+// app resolves this plugin's dependencies with its own repositories.
+def bundledMavenRepo = new File(projectDir, 'maven')
+
+rootProject.allprojects {
+    repositories {
+        exclusiveContent {
+            forRepository {
+                maven { url bundledMavenRepo.toURI() }
+            }
+            filter {
+                includeGroup 'com.google.matter'
+            }
+        }
+    }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
